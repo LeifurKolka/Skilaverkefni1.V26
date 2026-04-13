@@ -3,6 +3,14 @@ import "./index.css";
 import { useTaskHubStore } from "./store/useTaskHubStore";
 import { useTaskFilters } from "./hooks/useTaskFilters";
 import { useSelectedProject } from "./hooks/useSelectedProject";
+import { createProjectSchema, createTaskSchema } from "./utils/schemas";
+import { DashboardStats } from "./components/dashboard/DashboardStats";
+import { ProjectForm } from "./components/forms/ProjectForm";
+import { TaskForm } from "./components/forms/TaskForm";
+import { ProjectList } from "./components/projects/ProjectList";
+import { TaskList } from "./components/tasks/TaskList";
+import { TaskFilters } from "./components/tasks/TaskFilters";
+import { Box, Container, Typography, Divider, Grid } from "@mui/material";
 
 function App() {
   const {
@@ -16,6 +24,9 @@ function App() {
     deleteTask,
     updateTask,
   } = useTaskHubStore();
+
+const [projectError, setProjectError] = useState("");
+const [taskError, setTaskError] = useState("");
 
   const [projectName, setProjectName] = useState("");
 const [projectDescription, setProjectDescription] = useState("");
@@ -42,36 +53,56 @@ const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high">(
   >("all");
 
  const handleAddProject = () => {
-  if (!projectName.trim() || !projectDescription.trim()) return;
+  const result = createProjectSchema.safeParse({
+    name: projectName,
+    description: projectDescription,
+  });
+
+  if (!result.success) {
+    setProjectError(result.error.issues[0]?.message ?? "Invalid project data");
+    return;
+  }
 
   addProject({
     id: crypto.randomUUID(),
-    name: projectName,
-    description: projectDescription,
+    name: result.data.name,
+    description: result.data.description,
     createdAt: new Date().toISOString(),
   });
 
   setProjectName("");
   setProjectDescription("");
+  setProjectError("");
 };
 
   const handleAddTask = () => {
   if (!selectedProjectId) return;
-  if (!taskTitle.trim() || !taskDescription.trim()) return;
+
+  const result = createTaskSchema.safeParse({
+    title: taskTitle,
+    description: taskDescription,
+    priority: taskPriority,
+  });
+
+  if (!result.success) {
+    setTaskError(result.error.issues[0]?.message ?? "Invalid task data");
+    return;
+  }
 
   addTask({
     id: crypto.randomUUID(),
     projectId: selectedProjectId,
-    title: taskTitle,
-    description: taskDescription,
+    title: result.data.title,
+    description: result.data.description,
     completed: false,
-    priority: taskPriority,
+    priority: result.data.priority,
     createdAt: new Date().toISOString(),
   });
 
   setTaskTitle("");
   setTaskDescription("");
   setTaskPriority("medium");
+  setTaskError("");
 };
 
   const handleStartEdit = (taskId: string) => {
@@ -136,396 +167,137 @@ const dashboardStats = useMemo(() => {
 }, [projects, tasks]);
 
   return (
-    <main style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1>Team Task Hub</h1>
-
-      <section style={{ marginTop: "2rem" }}>
-  <h2>Dashboard</h2>
-
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-      gap: "1rem",
-      marginTop: "1rem",
+  <Box
+    sx={{
+      minHeight: "100vh",
+      backgroundColor: "#f8f5ff",
+      py: 4,
     }}
   >
-    <div
-      style={{
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        padding: "1rem",
+    <Container maxWidth="lg">
+      <Box
+        sx={{
+          backgroundColor: "white",
+          borderRadius: 3,
+          boxShadow: 3,
+          p: { xs: 2, md: 5 },
+        }}
+      >
+        <Typography variant="h3" component="h1" fontWeight="bold">
+          Team Task Hub
+        </Typography>
+
+        <Typography variant="body1" sx={{ mt: 1, color: "text.secondary" }}>
+          Manage projects, tasks, filters, and progress in one place.
+        </Typography>
+
+        <Divider sx={{ my: 3 }} />
+
+        <DashboardStats
+          totalProjects={dashboardStats.totalProjects}
+          totalTasks={dashboardStats.totalTasks}
+          completedTasks={dashboardStats.completedTasks}
+          incompleteTasks={dashboardStats.incompleteTasks}
+          highPriorityTasks={dashboardStats.highPriorityTasks}
+        />
+
+        <Grid container spacing={4} sx={{ mt: 1 }}>
+  <Grid item xs={12} md={4}>
+    <ProjectForm
+      projectName={projectName}
+      projectDescription={projectDescription}
+      projectError={projectError}
+      onProjectNameChange={(value) => {
+        setProjectName(value);
+        setProjectError("");
       }}
-    >
-      <h3 style={{ marginTop: 0 }}>Projects</h3>
-      <p>{dashboardStats.totalProjects}</p>
-    </div>
-
-    <div
-      style={{
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        padding: "1rem",
+      onProjectDescriptionChange={(value) => {
+        setProjectDescription(value);
+        setProjectError("");
       }}
-    >
-      <h3 style={{ marginTop: 0 }}>Tasks</h3>
-      <p>{dashboardStats.totalTasks}</p>
-    </div>
+      onSubmit={handleAddProject}
+    />
 
-    <div
-      style={{
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        padding: "1rem",
-      }}
-    >
-      <h3 style={{ marginTop: 0 }}>Completed</h3>
-      <p>{dashboardStats.completedTasks}</p>
-    </div>
+    <ProjectList
+      projects={projects}
+      selectedProjectId={selectedProjectId}
+      onSelectProject={setSelectedProject}
+    />
+  </Grid>
 
-    <div
-      style={{
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        padding: "1rem",
-      }}
-    >
-      <h3 style={{ marginTop: 0 }}>Incomplete</h3>
-      <p>{dashboardStats.incompleteTasks}</p>
-    </div>
-
-    <div
-      style={{
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        padding: "1rem",
-      }}
-    >
-      <h3 style={{ marginTop: 0 }}>High Priority</h3>
-      <p>{dashboardStats.highPriorityTasks}</p>
-    </div>
-  </div>
-</section>
-
-
-        <section style={{ marginTop: "2rem" }}>
-  <h2>Create Project</h2>
-
-  <div
-    style={{
-      display: "grid",
-      gap: "0.75rem",
-      maxWidth: "500px",
-      marginTop: "1rem",
+  <Grid
+    item
+    xs={12}
+    md="auto"
+    sx={{
+      display: { xs: "none", md: "flex" },
+      justifyContent: "center",
     }}
   >
-    <input
-      type="text"
-      placeholder="Project name"
-      value={projectName}
-      onChange={(e) => setProjectName(e.target.value)}
-      style={{ padding: "0.75rem" }}
-    />
+    <Divider orientation="vertical" flexItem />
+  </Grid>
 
-    <textarea
-      placeholder="Project description"
-      value={projectDescription}
-      onChange={(e) => setProjectDescription(e.target.value)}
-      rows={3}
-      style={{ padding: "0.75rem" }}
-    />
+  <Grid item xs={12} md>
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="h6" fontWeight="bold">
+        Selected Project
+      </Typography>
+      <Typography variant="body1" sx={{ mt: 1, color: "text.secondary" }}>
+        {selectedProject ? selectedProject.name : "No project selected"}
+      </Typography>
+    </Box>
 
-    <button
-      onClick={handleAddProject}
-      style={{
-        padding: "0.75rem 1rem",
-        cursor: "pointer",
+    <TaskForm
+      taskTitle={taskTitle}
+      taskDescription={taskDescription}
+      taskPriority={taskPriority}
+      taskError={taskError}
+      selectedProjectId={selectedProjectId}
+      onTaskTitleChange={(value) => {
+        setTaskTitle(value);
+        setTaskError("");
       }}
-    >
-      Add Project
-    </button>
-  </div>
-</section>
-
-<section style={{ marginTop: "2rem" }}>
-  <h2>Create Task</h2>
-
-  <div
-    style={{
-      display: "grid",
-      gap: "0.75rem",
-      maxWidth: "500px",
-      marginTop: "1rem",
-    }}
-  >
-    <input
-      type="text"
-      placeholder="Task title"
-      value={taskTitle}
-      onChange={(e) => setTaskTitle(e.target.value)}
-      style={{ padding: "0.75rem" }}
-      disabled={!selectedProjectId}
-    />
-
-    <textarea
-      placeholder="Task description"
-      value={taskDescription}
-      onChange={(e) => setTaskDescription(e.target.value)}
-      rows={3}
-      style={{ padding: "0.75rem" }}
-      disabled={!selectedProjectId}
-    />
-
-    <select
-      value={taskPriority}
-      onChange={(e) =>
-        setTaskPriority(e.target.value as "low" | "medium" | "high")
-      }
-      style={{ padding: "0.75rem" }}
-      disabled={!selectedProjectId}
-    >
-      <option value="low">Low</option>
-      <option value="medium">Medium</option>
-      <option value="high">High</option>
-    </select>
-
-    <button
-      onClick={handleAddTask}
-      disabled={!selectedProjectId}
-      style={{
-        padding: "0.75rem 1rem",
-        cursor: selectedProjectId ? "pointer" : "not-allowed",
+      onTaskDescriptionChange={(value) => {
+        setTaskDescription(value);
+        setTaskError("");
       }}
-    >
-      Add Task
-    </button>
+      onTaskPriorityChange={(value) => {
+        setTaskPriority(value);
+        setTaskError("");
+      }}
+      onSubmit={handleAddTask}
+    />
 
-    {!selectedProjectId && (
-      <p style={{ margin: 0 }}>Select a project before adding a task.</p>
-    )}
-  </div>
-</section>
+    <TaskFilters
+      searchTerm={searchTerm}
+      statusFilter={statusFilter}
+      priorityFilter={priorityFilter}
+      onSearchTermChange={setSearchTerm}
+      onStatusFilterChange={setStatusFilter}
+      onPriorityFilterChange={setPriorityFilter}
+    />
 
-      <section style={{ marginTop: "2rem" }}>
-        <h2>Selected Project ID</h2>
-        <p>{selectedProject ? selectedProject.name : "No project selected"}</p>
-      </section>
-
-      <section style={{ marginTop: "2rem" }}>
-        <h2>Projects</h2>
-        {projects.length === 0 ? (
-          <p>No projects yet.</p>
-        ) : (
-          <ul style={{ padding: 0, listStyle: "none" }}>
-            {projects.map((project) => {
-              const isSelected = project.id === selectedProjectId;
-
-              return (
-                <li key={project.id} style={{ marginBottom: "0.75rem" }}>
-                  <button
-                    onClick={() => setSelectedProject(project.id)}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "1rem",
-                      border: isSelected ? "2px solid purple" : "1px solid #ccc",
-                      backgroundColor: isSelected ? "#f3e8ff" : "white",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <strong>{project.name}</strong>
-                    <div>{project.description}</div>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section style={{ marginTop: "2rem" }}>
-        <h2>Task Search and Filters</h2>
-
-        <div
-          style={{
-            display: "grid",
-            gap: "0.75rem",
-            marginBottom: "1rem",
-            maxWidth: "500px",
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ padding: "0.75rem" }}
-          />
-
-          <select
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(
-                e.target.value as "all" | "completed" | "incomplete"
-              )
-            }
-            style={{ padding: "0.75rem" }}
-          >
-            <option value="all">All statuses</option>
-            <option value="completed">Completed</option>
-            <option value="incomplete">Incomplete</option>
-          </select>
-
-          <select
-            value={priorityFilter}
-            onChange={(e) =>
-              setPriorityFilter(
-                e.target.value as "all" | "low" | "medium" | "high"
-              )
-            }
-            style={{ padding: "0.75rem" }}
-          >
-            <option value="all">All priorities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
-      </section>
-
-      <section style={{ marginTop: "2rem" }}>
-        <h2>Tasks for Selected Project</h2>
-        {filteredTasks.length === 0 ? (
-          <p>No tasks match the current search/filter.</p>
-        ) : (
-          <ul style={{ padding: 0, listStyle: "none" }}>
-            {filteredTasks.map((task) => (
-              <li
-                key={task.id}
-                style={{
-                  marginBottom: "1rem",
-                  padding: "1rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "8px",
-                }}
-              >
-                {editingTaskId === task.id ? (
-                  <div style={{ display: "grid", gap: "0.75rem" }}>
-                    <input
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      placeholder="Task title"
-                      style={{ padding: "0.5rem" }}
-                    />
-
-                    <textarea
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                      placeholder="Task description"
-                      rows={3}
-                      style={{ padding: "0.5rem" }}
-                    />
-
-                    <select
-                      value={editPriority}
-                      onChange={(e) =>
-                        setEditPriority(
-                          e.target.value as "low" | "medium" | "high"
-                        )
-                      }
-                      style={{ padding: "0.5rem" }}
-                    >
-                      <option value="low">low</option>
-                      <option value="medium">medium</option>
-                      <option value="high">high</option>
-                    </select>
-
-                    <div style={{ display: "flex", gap: "0.75rem" }}>
-                      <button
-                        onClick={handleSaveEdit}
-                        style={{ padding: "0.5rem 0.75rem", cursor: "pointer" }}
-                      >
-                        Save
-                      </button>
-
-                      <button
-                        onClick={handleCancelEdit}
-                        style={{ padding: "0.5rem 0.75rem", cursor: "pointer" }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <h3
-                      style={{
-                        margin: 0,
-                        textDecoration: task.completed ? "line-through" : "none",
-                      }}
-                    >
-                      {task.title}
-                    </h3>
-
-                    <p style={{ margin: "0.5rem 0" }}>{task.description}</p>
-
-                    <p style={{ margin: "0.5rem 0" }}>
-                      <strong>Priority:</strong> {task.priority}
-                    </p>
-
-                    <p style={{ margin: "0.5rem 0" }}>
-                      <strong>Status:</strong>{" "}
-                      {task.completed ? "Completed" : "Incomplete"}
-                    </p>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "0.75rem",
-                        marginTop: "0.75rem",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <button
-                        onClick={() => toggleTaskCompletion(task.id)}
-                        style={{
-                          padding: "0.5rem 0.75rem",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {task.completed ? "Mark Incomplete" : "Mark Complete"}
-                      </button>
-
-                      <button
-                        onClick={() => handleStartEdit(task.id)}
-                        style={{
-                          padding: "0.5rem 0.75rem",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Edit Task
-                      </button>
-
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        style={{
-                          padding: "0.5rem 0.75rem",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Delete Task
-                      </button>
-                    </div>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </main>
-  );
+    <TaskList
+      tasks={filteredTasks}
+      editingTaskId={editingTaskId}
+      editTitle={editTitle}
+      editDescription={editDescription}
+      editPriority={editPriority}
+      onEditTitleChange={setEditTitle}
+      onEditDescriptionChange={setEditDescription}
+      onEditPriorityChange={setEditPriority}
+      onStartEdit={handleStartEdit}
+      onSaveEdit={handleSaveEdit}
+      onCancelEdit={handleCancelEdit}
+      onToggleTask={toggleTaskCompletion}
+      onDeleteTask={deleteTask}
+    />
+  </Grid>
+</Grid>
+      </Box>
+    </Container>
+  </Box>
+);
 }
 
 export default App;

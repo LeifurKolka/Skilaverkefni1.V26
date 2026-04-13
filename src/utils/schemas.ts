@@ -19,3 +19,14 @@ export const taskSchema = z.object({
 
 export const projectsSchema = z.array(projectSchema);
 export const tasksSchema = z.array(taskSchema);
+
+export const createProjectSchema = z.object({
+  name: z.string().min(1, "Project name is required"),
+  description: z.string().min(1, "Project description is required"),
+});
+
+export const createTaskSchema = z.object({
+  title: z.string().min(1, "Task title is required"),
+  description: z.string().min(1, "Task description is required"),
+  priority: z.enum(["low", "medium", "high"]),
+});
