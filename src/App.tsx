@@ -116,19 +116,20 @@ const [taskPriority, setTaskPriority] = useState<"low" | "medium" | "high">(
   };
 
   const handleSaveEdit = () => {
-    if (!editingTaskId) return;
+  if (!editingTaskId) return;
+  if (!editTitle.trim() || !editDescription.trim()) return;
 
-    updateTask(editingTaskId, {
-      title: editTitle,
-      description: editDescription,
-      priority: editPriority,
-    });
+  updateTask(editingTaskId, {
+    title: editTitle,
+    description: editDescription,
+    priority: editPriority,
+  });
 
-    setEditingTaskId(null);
-    setEditTitle("");
-    setEditDescription("");
-    setEditPriority("medium");
-  };
+  setEditingTaskId(null);
+  setEditTitle("");
+  setEditDescription("");
+  setEditPriority("medium");
+};
 
   const handleCancelEdit = () => {
     setEditingTaskId(null);
