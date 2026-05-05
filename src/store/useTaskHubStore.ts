@@ -54,12 +54,18 @@ export const useTaskHubStore = create<TaskHubState>((set) => ({
       saveToStorage("projects", updatedProjects);
       saveToStorage("tasks", updatedTasks);
 
-      return {
-        projects: updatedProjects,
-        tasks: updatedTasks,
-        selectedProjectId:
-          state.selectedProjectId === projectId ? null : state.selectedProjectId,
-      };
+      const nextSelectedProjectId =
+  state.selectedProjectId === projectId
+    ? updatedProjects.length > 0
+      ? updatedProjects[0].id
+      : null
+    : state.selectedProjectId;
+
+return {
+  projects: updatedProjects,
+  tasks: updatedTasks,
+  selectedProjectId: nextSelectedProjectId,
+};
     }),
 
   addTask: (task) =>
