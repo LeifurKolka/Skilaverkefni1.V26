@@ -185,3 +185,29 @@ Byggðu ofan á kóðann úr skilaverkefni-1 og bættu við eftirfarandi.
 - **Cypress** keyrð sjálfkrafa: **3**
 
 ---
+
+
+
+
+
+# Skilaverkefni-2
+
+## Prófanir og gæðatrygging
+
+Þetta verkefni byggir ofan á "Team-task-hub" verkefnið úr Skilaverkefni-1 og bætir við "testing tools" og sjálfvirkni á projectið
+
+### Vitest
+keyrir eininga- og component-test: npm run test:run
+Ég fann 2 bugs í þessu sectioni og lagaði þær, þegar þú eyðir projecti þá er næsta valið sjálfkrafa og tasks geta ekki lengur verið saved með tómt title eða description 
+
+### Storybook
+til að ræsa Storybook locally: npm run storybook
+til að byggja Storybook: npm run build-storybook
+
+### Cypress
+til að opna Cypress: npm run cypress:open
+til að runna Cypress "headlessly": npm run cypress:run
+
+### CI
+Github actions workflow er skilgreint í: ".github/workflows/ci.yml"
+Ci-Pípan keyrir sjálfkrafa við push og pull requests á "main" og framkvæmir: Vitest próf, Storybook build og Cypress E2E próf
