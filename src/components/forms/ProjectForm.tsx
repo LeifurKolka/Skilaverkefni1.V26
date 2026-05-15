@@ -32,24 +32,30 @@ export function ProjectForm({
         }}
       >
         <TextField
-          label="Project name"
-          value={projectName}
-          onChange={(e) => onProjectNameChange(e.target.value)}
-          fullWidth
-        />
+  label="Project name"
+  value={projectName}
+  onChange={(e) => onProjectNameChange(e.target.value)}
+  fullWidth
+  slotProps={{
+    htmlInput: { "data-cy": "project-name-input" },
+  }}
+/>
 
-        <TextField
-          label="Project description"
-          value={projectDescription}
-          onChange={(e) => onProjectDescriptionChange(e.target.value)}
-          multiline
-          minRows={3}
-          fullWidth
-        />
+<TextField
+  label="Project description"
+  value={projectDescription}
+  onChange={(e) => onProjectDescriptionChange(e.target.value)}
+  multiline
+  minRows={3}
+  fullWidth
+  slotProps={{
+    htmlInput: { "data-cy": "project-description-input" },
+  }}
+/>
 
         {projectError && <Alert severity="error">{projectError}</Alert>}
 
-        <Button variant="contained" onClick={onSubmit}>
+        <Button variant="contained" onClick={onSubmit} data-cy="add-project-button">
           Add Project
         </Button>
       </Box>

@@ -45,22 +45,28 @@ export function TaskForm({
         }}
       >
         <TextField
-          label="Task title"
-          value={taskTitle}
-          onChange={(e) => onTaskTitleChange(e.target.value)}
-          fullWidth
-          disabled={!selectedProjectId}
-        />
+  label="Task title"
+  value={taskTitle}
+  onChange={(e) => onTaskTitleChange(e.target.value)}
+  fullWidth
+  disabled={!selectedProjectId}
+  slotProps={{
+    htmlInput: { "data-cy": "task-title-input" },
+  }}
+/>
 
-        <TextField
-          label="Task description"
-          value={taskDescription}
-          onChange={(e) => onTaskDescriptionChange(e.target.value)}
-          multiline
-          minRows={3}
-          fullWidth
-          disabled={!selectedProjectId}
-        />
+<TextField
+  label="Task description"
+  value={taskDescription}
+  onChange={(e) => onTaskDescriptionChange(e.target.value)}
+  multiline
+  minRows={3}
+  fullWidth
+  disabled={!selectedProjectId}
+  slotProps={{
+    htmlInput: { "data-cy": "task-description-input" },
+  }}
+/>
 
         <TextField
           select
@@ -70,6 +76,7 @@ export function TaskForm({
             onTaskPriorityChange(e.target.value as "low" | "medium" | "high")
           }
           fullWidth
+          inputProps={{ "data-cy": "task-priority-select" }}
           disabled={!selectedProjectId}
         >
           <MenuItem value="low">Low</MenuItem>
@@ -83,6 +90,7 @@ export function TaskForm({
           variant="contained"
           onClick={onSubmit}
           disabled={!selectedProjectId}
+          data-cy="add-task-button"
         >
           Add Task
         </Button>

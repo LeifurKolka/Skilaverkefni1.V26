@@ -140,6 +140,7 @@ export function TaskList({
                       <Button
                         variant="contained"
                         onClick={() => onToggleTask(task.id)}
+                        data-cy="toggle-task-button"
                       >
                         {task.completed ? "Mark Incomplete" : "Mark Complete"}
                       </Button>
